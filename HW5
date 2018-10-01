@@ -165,6 +165,7 @@ plt.xlabel('PC1')
 plt.ylabel('PC2')
 plt.title('logistic regression after PCA')
 plt.legend(loc='lower left') 
+plt.show()
 
 #fit svm
 svm.fit(X_train_pca, y_train)
@@ -180,6 +181,7 @@ plt.xlabel('PC1')
 plt.ylabel('PC2')
 plt.title('SVM after PCA')
 plt.legend(loc='lower left') 
+plt.show()
 
 
 print("\n Part 4: Perform and LDA on both datasets")
@@ -204,6 +206,7 @@ plt.xlabel('PC1')
 plt.ylabel('PC2')
 plt.title('logistic regression after LDA')
 plt.legend(loc='lower left') 
+plt.show()
 
 #fit svm
 svm.fit(X_train_lda, y_train)
@@ -219,6 +222,7 @@ plt.xlabel('PC1')
 plt.ylabel('PC2')
 plt.title('SVM after LDA')
 plt.legend(loc='lower left') 
+plt.show()
 
 
 print("\n Part 5: Perform a kPCA on both datasets")
@@ -243,6 +247,7 @@ for g in gamma_range:
     plt.ylabel('PC2')
     plt.title('logistic regression after KPCA')
     plt.legend(loc='lower left') 
+    plt.show()
     
     #fit svm
     svm.fit(X_train_kpca, y_train)
@@ -257,6 +262,7 @@ for g in gamma_range:
     plt.ylabel('PC2')
     plt.title('SVM after KPCA')
     plt.legend(loc='lower left') 
+    plt.show()
     
 print("\n-----The best gamma is 0.01-----",'\n')
 
