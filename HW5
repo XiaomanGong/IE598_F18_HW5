@@ -250,6 +250,7 @@ for g in gamma_range:
     plt.show()
     
     #fit svm
+    svm= SVC(kernel='rbf',C=1.0)
     svm.fit(X_train_kpca, y_train)
     y_train_pred = svm.predict(X_train_kpca)
     y_test_pred = svm.predict(X_test_kpca)
