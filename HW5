@@ -1,0 +1,248 @@
+Created on Sat Sep 29 12:40:13 2018
+
+@author: danaoqueyang
+"""
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from pandas import DataFrame
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import cross_val_score
+from sklearn.metrics import accuracy_score
+from matplotlib.colors import ListedColormap
+from sklearn.linear_model import LogisticRegression
+from sklearn.svm import SVC
+from sklearn.decomposition import PCA
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
+from sklearn.decomposition import KernelPCA
+from sklearn import metrics
+
+
+#load data
+df = pd.read_excel('/Users/danaoqueyang/Desktop/wine.xlsx', sep ='\s+')
+
+print(df.head())
+
+print(df.describe())
+
+print(df.dtypes)
+
+
+print("\n Part 1: Exploratory Data Analysis")
+
+## Create the scatterplot matrix 
+cols=df.columns
+sns.pairplot(df[cols], size=2)
+plt.tight_layout()
+plt.savefig('ScatterplotMatrix.png')
+plt.show()
+
+
+## Create heatmap
+corMat=DataFrame(df.corr())
+# print(corMat)
+plt.pcolor(corMat)
+plt.savefig('corMat.png')
+plt.show()
+
+sns.heatmap(corMat,cbar=True, annot=True, square=True, 
+            fmt='.2f',annot_kws={'size':6.5},yticklabels=cols,xticklabels=cols)
+plt.savefig('heatmap.png')
+plt.show()
+
+## Creat the box plot 
+def generate_box_plot(data, cols):
+    # standardize data
+    new_df = df.copy()
+    for i in range(len(data.columns)):
+        col = new_df.iloc[:,i]
+        new_df.iloc[:,i] = (col - col.mean()) / col.std()
+    
+    plt.figure()
+    plt.boxplot(new_df.values, labels=cols)
+    plt.xlabel("attributes index")
+    plt.ylabel("Standard Quantile Range")
+    plt.show()
+    
+generate_box_plot(df, df.columns)
+
+
+
+X = df.iloc[:, 0:-1].values
+y = df.iloc[:,-1].values
+
+## Standardize the features
+sc=StandardScaler()
+sc.fit(X)
+X_std=sc.transform(X)
+
+## Split data into training and test sets
+X_train, X_test, y_train, y_test = train_test_split(X_std, y, test_size=0.2, random_state=42)
+
+
+
+def plot_decision_regions(X, y, classifier, resolution=0.02):
+       # setup marker generator and color map
+       markers = ('s', 'x', 'o', '^', 'v')
+       colors = ('red', 'blue', 'lightgreen', 'gray', 'cyan')
+       cmap = ListedColormap(colors[:len(np.unique(y))])
+       # plot the decision surface
+       x1_min, x1_max = X[:, 0].min() - 1, X[:, 0].max() + 1
+       x2_min, x2_max = X[:, 1].min() - 1, X[:, 1].max() + 1
+       xx1, xx2 = np.meshgrid(np.arange(x1_min, x1_max, resolution),
+                              np.arange(x2_min, x2_max, resolution))
+       Z = classifier.predict(np.array([xx1.ravel(), xx2.ravel()]).T)
+       Z = Z.reshape(xx1.shape)
+       plt.contourf(xx1, xx2, Z, alpha=0.3, cmap=cmap)
+       plt.xlim(xx1.min(), xx1.max())
+       plt.ylim(xx2.min(), xx2.max())
+       # plot class samples
+       for idx, cl in enumerate(np.unique(y)):
+           plt.scatter(x=X[y == cl, 0],
+                       y=X[y == cl, 1],
+                       alpha=0.8,
+                       c=colors[idx],
+                       marker=markers[idx],
+                       label=cl,
+                       edgecolor='black')
+
+
+print("\n Part 2: Logistic regression classifier v. SVM classifier - baseline")
+
+## Logistic regression
+lr=LogisticRegression(C=1000.0, random_state=1)
+lr.fit(X_train,y_train)
+y_train_pred=lr.predict(X_train)
+y_test_pred=lr.predict(X_test)
+print( "Logistic regression train score:",metrics.accuracy_score(y_train, y_train_pred))
+print( "Logistic regression test score:",metrics.accuracy_score(y_test, y_test_pred))
+# print( "Logistic regression test confusion matrix:\n",metrics.confusion_matrix(y_test, y_test_pred))
+
+
+## SVM Classifier
+svm=SVC(kernel='linear',C=1.0)
+svm.fit(X_train,y_train)
+y_train_pred=svm.predict(X_train)
+y_test_pred=svm.predict(X_test)
+print( "SVM train score:",metrics.accuracy_score(y_train, y_train_pred))
+print( "SVM test score:",metrics.accuracy_score(y_test, y_test_pred))
+# print( "SVM test confusion matrix:\n",metrics.confusion_matrix(y_test, y_test_pred))
+
+
+print("\n Part 3: Perform a PCA on both datasets")
+
+## PCA
+pca=PCA(n_components=2)
+X_train_pca = pca.fit_transform(X_train)
+X_test_pca = pca.transform(X_test)
+
+#fit lr
+lr.fit(X_train_pca, y_train)
+y_train_pred=lr.predict(X_train_pca)
+y_test_pred=lr.predict(X_test_pca)
+print( "(PCA)Logistic regression train score:",metrics.accuracy_score(y_train, y_train_pred))
+print( "(PCA)Logistic regression test score:",metrics.accuracy_score(y_test, y_test_pred))
+# print( "(PCA)Logistic regression test confusion matrix:\n",metrics.confusion_matrix(y_test, 
+#                                                                                     y_test_pred))
+
+plt.figure()
+plot_decision_regions(X_test_pca, y_test, lr, resolution=0.02)
+plt.xlabel('PC1')
+plt.ylabel('PC2')
+plt.title('logistic regression after PCA')
+plt.legend(loc='lower left') 
+
+#fit svm
+svm.fit(X_train_pca, y_train)
+y_train_pred=svm.predict(X_train_pca)
+y_test_pred=svm.predict(X_test_pca)
+print( "(PCA)SVM train score:",metrics.accuracy_score(y_train, y_train_pred))
+print( "(PCA)SVM test score:",metrics.accuracy_score(y_test, y_test_pred))
+# print( "(PCA)SVM test confusion matrix:\n",metrics.confusion_matrix(y_test, y_test_pred))
+
+plt.figure()
+plot_decision_regions(X_test_pca, y_test, svm, resolution=0.02)
+plt.xlabel('PC1')
+plt.ylabel('PC2')
+plt.title('SVM after PCA')
+plt.legend(loc='lower left') 
+
+
+print("\n Part 4: Perform and LDA on both datasets")
+
+## LDA
+lda=LDA(n_components=2)
+X_train_lda = lda.fit_transform(X_train, y_train)
+X_test_lda = lda.transform(X_test)
+
+#fit lr
+lr = lr.fit(X_train_lda, y_train)
+y_train_pred=lr.predict(X_train_lda)
+y_test_pred=lr.predict(X_test_lda)
+print( "(LDA)Logistic regression train score:",metrics.accuracy_score(y_train, y_train_pred))
+print( "(LDA)Logistic regression test score:",metrics.accuracy_score(y_test, y_test_pred))
+# print( "(LDA)Logistic regression test confusion matrix:\n",metrics.confusion_matrix(y_test, 
+#                                                                                     y_test_pred))
+
+plt.figure()
+plot_decision_regions(X_test_lda, y_test, lr, resolution=0.02)
+plt.xlabel('PC1')
+plt.ylabel('PC2')
+plt.title('logistic regression after LDA')
+plt.legend(loc='lower left') 
+
+#fit svm
+svm.fit(X_train_lda, y_train)
+y_train_pred=svm.predict(X_train_lda)
+y_test_pred=svm.predict(X_test_lda)
+print( "(LDA)SVM train score:",metrics.accuracy_score(y_train, y_train_pred))
+print( "(LDA)SVM test score:",metrics.accuracy_score(y_test, y_test_pred))
+# print( "(LDA)SVM test confusion matrix:\n",metrics.confusion_matrix(y_test, y_test_pred))
+
+plt.figure()
+plot_decision_regions(X_test_lda, y_test, svm, resolution=0.02)
+plt.xlabel('PC1')
+plt.ylabel('PC2')
+plt.title('SVM after LDA')
+plt.legend(loc='lower left') 
+
+
+print("\n Part 5: Perform a kPCA on both datasets")
+
+
+gamma_range= [0.01,0.1,1,10]
+for g in gamma_range:
+    kpca = KernelPCA(n_components=2, kernel='rbf',gamma=g)
+    X_train_kpca = kpca.fit_transform(X_train)
+    X_test_kpca = kpca.transform(X_test)
+
+    #fit lr
+    lr.fit(X_train_kpca, y_train)
+    y_train_pred = lr.predict(X_train_kpca)
+    y_test_pred = lr.predict(X_test_kpca)
+    print("\n gamma =", g)
+    print( "(KPCA)Logistic regression train score:",metrics.accuracy_score(y_train, y_train_pred))
+    print( "(KPCA)Logistic regression test score:",metrics.accuracy_score(y_test, y_test_pred))
+    plt.figure()
+    plot_decision_regions(X_test_lda, y_test, lr, resolution=0.02)
+    plt.xlabel('PC1')
+    plt.ylabel('PC2')
+    plt.title('logistic regression after KPCA')
+    plt.legend(loc='lower left') 
+    
+    #fit svm
+    svm.fit(X_train_kpca, y_train)
+    y_train_pred = svm.predict(X_train_kpca)
+    y_test_pred = svm.predict(X_test_kpca)
+    print("\n gamma = ", g)
+    print( "(KPCA)SVM train score:",metrics.accuracy_score(y_train, y_train_pred))
+    print( "(KPCA)SVM test score:",metrics.accuracy_score(y_test, y_test_pred))
+    
+print("the best gamma is")
+
+print("My name is Xiaoman Gong")
+print("My NetID is: xiaoman5")
+print("I hereby certify that I have read the University policy on Academic Integrity and that I am not in violation.")
