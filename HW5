@@ -241,7 +241,7 @@ for g in gamma_range:
     print( "(KPCA)SVM train score:",metrics.accuracy_score(y_train, y_train_pred))
     print( "(KPCA)SVM test score:",metrics.accuracy_score(y_test, y_test_pred))
     
-print("the best gamma is")
+print("\n-----The best gamma is 0.01-----",'\n')
 
 print("My name is Xiaoman Gong")
 print("My NetID is: xiaoman5")
